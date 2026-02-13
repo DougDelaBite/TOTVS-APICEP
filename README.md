@@ -13,6 +13,8 @@ Data: 13-02-2026
 - Pasta "APICEP"
   - Pasta com o Projeto desenvolvido em Delphi 12 Community
   - Documentação
+    - Documentação do Cliente (docx e pdf)
+    - Arquivo de orientação do teste
   - Prints de tela
   - Módulo Horse
   - Imagens utilizadas
