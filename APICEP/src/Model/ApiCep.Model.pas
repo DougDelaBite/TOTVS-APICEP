@@ -1,0 +1,163 @@
+unit ApiCep.Model;
+
+interface
+
+uses
+  System.Net.HttpClient, System.JSON, ApiCep.DTO;
+
+type
+  TEnderecoModel = class
+  private
+    function ConsultarAPI(const ACEP: string; var ApiOrigem: string): TJSONObject;
+
+    const URL_VIACEP = 'https://viacep.com.br/ws/%s/json/';
+    const URL_APICEP = 'https://cdn.apicep.com/file/apicep/%s.json';
+    const URL_AWEAPI = 'https://cep.awesomeapi.com.br/json/%s';
+
+  public
+    function BuscarCEP(const ACEP: string): TEndereco;
+
+  end;
+
+implementation
+
+uses System.SysUtils;
+
+{ TEnderecoModel }
+
+{ TODO : Avaliar a possibilidade/necessidade de incorporar em uma tabela no BD
+         os CEPs das APIs, no caso de uma eventual falha catastrófica o sistema não
+         travar por não conseguir consultar o CEP informado direto das APIs }
+
+function TEnderecoModel.BuscarCEP(const ACEP: string): TEndereco;
+var
+  strJSon: TJSONObject;
+  ApiOrigem: string;
+begin
+  Result := TEndereco.Create;
+
+  try
+    strJSon := ConsultarAPI(ACEP, ApiOrigem);
+    try
+      if not (strJSon = nil) then
+      begin
+        if ApiOrigem = 'VIACEP' then
+        begin
+          Result.Logradouro  := strJSon.GetValue('logradouro').Value;
+          Result.Complemento := strJSon.GetValue('complemento').Value;
+          Result.Unidade     := strJSon.GetValue('unidade').Value;
+          Result.Bairro      := strJSon.GetValue('bairro').Value;
+          Result.Localidade  := strJSon.GetValue('localidade').Value;
+          Result.UF          := strJSon.GetValue('uf').Value;
+          Result.Estado      := strJSon.GetValue('estado').Value;
+          Result.Regiao      := strJSon.GetValue('regiao').Value;
+          Result.IBGE        := strJSon.GetValue('ibge').Value;
+          Result.GIA         := strJSon.GetValue('gia').Value;
+          Result.DDD         := strJSon.GetValue('ddd').Value;
+          Result.Siafi       := strJSon.GetValue('siafi').Value;
+          Result.Api         := ApiOrigem;
+        end
+        else
+        if ApiOrigem = 'APICEP' then
+        begin
+          Result.Logradouro  := strJSon.GetValue('address').Value;
+          Result.Complemento := EmptyStr;
+          Result.Unidade     := EmptyStr;
+          Result.Bairro      := strJSon.GetValue('district').Value;
+          Result.Localidade  := strJSon.GetValue('district').Value;
+          Result.UF          := strJSon.GetValue('state').Value;
+          Result.Estado      := strJSon.GetValue('city').Value;
+          Result.Regiao      := EmptyStr;
+          Result.IBGE        := EmptyStr;
+          Result.GIA         := EmptyStr;
+          Result.DDD         := EmptyStr;
+          Result.Siafi       := EmptyStr;
+          Result.Api         := ApiOrigem;
+        end
+        else
+        if ApiOrigem = 'AWEAPI' then
+        begin
+          Result.Logradouro  := strJSon.GetValue('address').Value;
+          Result.Complemento := EmptyStr;
+          Result.Unidade     := EmptyStr;
+          Result.Bairro      := strJSon.GetValue('district').Value;
+          Result.Localidade  := strJSon.GetValue('district').Value;
+          Result.UF          := strJSon.GetValue('state').Value;
+          Result.Estado      := strJSon.GetValue('city').Value;
+          Result.Regiao      := EmptyStr;
+          Result.IBGE        := strJSon.GetValue('city_ibge').Value;
+          Result.GIA         := EmptyStr;
+          Result.DDD         := strJSon.GetValue('ddd').Value;
+          Result.Siafi       := EmptyStr;
+          Result.Api         := ApiOrigem;
+        end;
+      end
+      else
+        Result.Api := ApiOrigem;
+    except
+      on e: exception do
+      begin
+        Result.Api := 'Erro ao processar retorno da API: ' + e.Message;
+      end;
+    end;
+  finally
+    strJSon.Free;
+  end;
+
+
+end;
+
+function TEnderecoModel.ConsultarAPI(const ACEP: string; var ApiOrigem: string): TJSONObject;
+var
+  cliHttp: THTTPClient;
+  resResp: IHTTPResponse;
+begin
+  Result := nil;
+
+  cliHttp := THTTPClient.Create;
+  try
+    //Consulta a API ViaCEP
+    resResp := cliHttp.Get(Format(URL_VIACEP, [ACEP]));
+
+    if (resResp.StatusCode = 200) and
+       not (UTF8ToString(resResp.ContentAsString) = '{'#$A'  "erro": "true"'#$A'}') then
+    begin
+      ApiOrigem := 'VIACEP';
+      Result := TJSONObject.ParseJSONValue(resResp.ContentAsString) as TJSONObject;
+    end
+    else
+    begin
+      //Consulta a API ApiCEP  (Obs.: Esta API não retornou nenhum dos CEPs consultados)
+      resResp := cliHttp.Get(Format(URL_APICEP, [ACEP]));
+
+      if (resResp.StatusCode = 200) and
+         not ((pos(UTF8ToString(resResp.ContentAsString), '"status":400') = 1) or
+              (pos(UTF8ToString(resResp.ContentAsString), '"status":404') = 1)) then
+      begin
+        ApiOrigem := 'APICEP';
+        Result := TJSONObject.ParseJSONValue(resResp.ContentAsString) as TJSONObject;
+      end
+      else
+      begin
+        //Consulta a API AwesomeApi
+        resResp := cliHttp.Get(Format(URL_AWEAPI, [ACEP]));
+
+        if (resResp.StatusCode = 200) and
+           not ((pos(UTF8ToString(resResp.ContentAsString), 'status: 400') = 1) or
+                (pos(UTF8ToString(resResp.ContentAsString), 'status: 404') = 1)) then
+        begin
+          ApiOrigem := 'AWEAPI';
+          Result := TJSONObject.ParseJSONValue(resResp.ContentAsString) as TJSONObject;
+        end
+        else
+          ApiOrigem := 'Sem retorno da API';
+      end;
+    end;
+
+  finally
+    cliHttp.Free;
+  end;
+
+end;
+
+end.

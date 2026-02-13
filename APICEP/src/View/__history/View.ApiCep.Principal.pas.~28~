@@ -1,0 +1,133 @@
+unit View.ApiCep.Principal;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Imaging.jpeg,
+  Vcl.ExtCtrls, System.ImageList, Vcl.ImgList;
+
+type
+  TviewHospitEndereco = class(TForm)
+    Panel1: TPanel;
+    Panel2: TPanel;
+    Panel3: TPanel;
+    btnFechar: TButton;
+    Image1: TImage;
+    Label1: TLabel;
+    Label2: TLabel;
+    edtLogradouro: TEdit;
+    GroupBox1: TGroupBox;
+    Label3: TLabel;
+    edtIBGE: TEdit;
+    Label4: TLabel;
+    edtComplemento: TEdit;
+    Label5: TLabel;
+    edtBairro: TEdit;
+    Label6: TLabel;
+    edtRegiao: TEdit;
+    Label7: TLabel;
+    edtUF: TEdit;
+    Label8: TLabel;
+    edtCEP: TEdit;
+    ImageList: TImageList;
+    btnConsultarCEP: TButton;
+    edtDDD: TEdit;
+    Label9: TLabel;
+    edtSiafi: TEdit;
+    Label10: TLabel;
+    lblApi: TLabel;
+    Label11: TLabel;
+    edtUnidade: TEdit;
+    Label12: TLabel;
+    edtLocalidade: TEdit;
+    Label13: TLabel;
+    edtEstado: TEdit;
+    Label14: TLabel;
+    edtGIA: TEdit;
+    btnLimparTela: TButton;
+    procedure btnFecharClick(Sender: TObject);
+    procedure btnConsultarCEPClick(Sender: TObject);
+    procedure btnLimparTelaClick(Sender: TObject);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  viewHospitEndereco: TviewHospitEndereco;
+
+implementation
+
+uses
+  ApiCep.Controller, ApiCep.DTO;
+
+{$R *.dfm}
+
+procedure TviewHospitEndereco.btnFecharClick(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TviewHospitEndereco.btnLimparTelaClick(Sender: TObject);
+begin
+  edtCEP.Clear;
+  edtLogradouro.Clear;
+  edtComplemento.Clear;
+  edtUnidade.Clear;
+  edtBairro.Clear;
+  edtLocalidade.Clear;
+  edtEstado.Clear;
+  edtUF.Clear;
+  edtRegiao.Clear;
+  edtIBGE.Clear;
+  edtGIA.Clear;
+  edtDDD.Clear;
+  edtSiafi.Clear;
+  lblApi.Caption := 'API Consultada: ';
+end;
+
+procedure TviewHospitEndereco.btnConsultarCEPClick(Sender: TObject);
+var
+  Controller: TApiCepController;
+  Endereco: TEndereco;
+begin
+  if Length(edtCEP.Text) <> 8 then
+  begin
+    ShowMessage('Cep inválido!');
+    edtCEP.SetFocus;
+    Exit;
+  end;
+
+  Controller := TApiCepController.Create;
+  Endereco   := TEndereco.Create;
+  try
+    Endereco := Controller.BuscaCEP(edtCEP.Text);
+    if Assigned(Endereco) then
+    begin
+      edtLogradouro.Text  := Endereco.Logradouro;
+      edtComplemento.Text := Endereco.Complemento;
+      edtUnidade.Text     := Endereco.Unidade;
+      edtBairro.Text      := Endereco.Bairro;
+      edtLocalidade.Text  := Endereco.Localidade;
+      edtEstado.Text      := Endereco.Estado;
+      edtUF.Text          := Endereco.UF;
+      edtRegiao.Text      := Endereco.Regiao;
+      edtIBGE.Text        := Endereco.IBGE;
+      edtGIA.Text         := Endereco.GIA;
+      edtDDD.Text         := Endereco.DDD;
+      edtSiafi.Text       := Endereco.Siafi;
+
+      lblApi.Caption := 'API Consultada: ' + Endereco.Api;
+
+      Endereco.Free;
+    end
+    else
+      lblApi.Caption := 'API Consultada: ' + Endereco.Api;
+  finally
+    Controller.Free;
+  end;
+end;
+
+end.

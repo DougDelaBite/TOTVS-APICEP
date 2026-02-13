@@ -1,0 +1,14 @@
+program Totvs.Hospitalidade.Enderecos;
+
+uses
+  Vcl.Forms,
+  View.ApiCep.Principal in 'View\View.ApiCep.Principal.pas' {viewHospitEndereco};
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TviewHospitEndereco, viewHospitEndereco);
+  Application.Run;
+end.

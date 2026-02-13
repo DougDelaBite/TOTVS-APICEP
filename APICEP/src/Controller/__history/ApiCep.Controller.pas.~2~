@@ -1,0 +1,21 @@
+unit ApiCep.Controller;
+
+interface
+
+uses
+  ApiCep.Model, ApiCep.DTO;
+
+type
+  TApiCepController = class
+  private
+    FModel: TEnderecoModel;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    function BuscaCEP(const ACEP: string): TEndereco;
+
+  end;
+
+implementation
+
+end.

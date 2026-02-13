@@ -1,0 +1,11 @@
+{
+	"name": "APICep",
+	"description": "API para disponibilizar informações de um determinado Endereço a parter de um CEP",
+	"version": "1.0.0",
+	"homepage": "",
+	"mainsrc": "./src",
+	"projects": [],
+	"dependencies": {
+		"github.com/hashload/horse": "^3.1.9"
+	}
+}

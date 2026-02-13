@@ -1,0 +1,18 @@
+unit ApiCep.DTO;
+
+interface
+
+type
+  TEndereco = class
+    Logradouro: string;
+    Numero: integer;
+    Complemento: string;
+    Bairro: string;
+    Cidade: string;
+    UF: string;
+    CEP: integer;
+  end;
+
+implementation
+
+end.
